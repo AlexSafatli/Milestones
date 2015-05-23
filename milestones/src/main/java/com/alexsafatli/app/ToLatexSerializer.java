@@ -200,4 +200,80 @@ public class ToLatexSerializer implements Visitor {
         }
     }
 
+    public void visit(StrongEmphSuperNode node) {
+    	if (node.isClosed()) {
+    		if (node.isStrong()) printTag(node,"textbf");
+    		else printTag(node,"textit");
+    	}
+    	else {
+    		printer.print(node.getChars());
+    		visitChildren(node);
+    	}
+    }
+
+    public void visit(StrikeNode node) {
+    	printer.print(node.getText());
+    }
+
+    public void visit(TableBodyNode node) {
+    	// TODO Table body
+    }
+
+    public void visit(TableCaptionNode node) {
+
+    }
+
+    public void visit(TableCellNode node) {
+
+    }
+
+    public void visit(TableColumnNode node) {
+
+    }
+
+    public void visit(TableHeaderNode node) {
+
+    }
+
+    public void visit(TableNode node) {
+
+    }
+
+    public void visit(TableRowNode node) {
+
+    }
+
+    public void visit(VerbatimNode node) {
+    	// TODO Verbatim
+    }
+
+    public void visit(WikiLinkNode node) {
+    	printLink(linkRenderer.render(node));
+    }
+
+    public void visit(TextNode node) {
+        if (abbreviations.isEmpty()) {
+            printer.print(node.getText());
+        } else {
+            printWithAbbreviations(node.getText());
+        }
+    }
+
+    public void visit(SpecialTextNode node) {
+        printer.printEncoded(node.getText());
+    }
+
+    public void visit(SuperNode node) {
+        visitChildren(node);
+    }
+
+    protected void visitChildren(SuperNode node) {
+        for (Node child : node.getChildren()) {
+            child.accept(this);
+        }
+    }
+
+    
+
+
 }
