@@ -22,8 +22,6 @@ public class ToLatexSerializer implements Visitor {
 	protected Printer printer = new Printer();
 	protected final Map<String,ReferenceNode> refs = 
 		new HashMap<String,ReferenceNode>();
-	protected final Map<String,String> abbreviations = 
-		new HashMap<String,String>();
 	protected final LinkRenderer linkRenderer;
 
 	// TODO Documentation (Verbatim?)
@@ -49,23 +47,10 @@ public class ToLatexSerializer implements Visitor {
 	public void visit(RootNode node) {
 		for (ReferenceNode refNode : node.getReferences()) {
 			visitChildren(refNode);
-			references.put(normalize(printer.getString()),refNode);
-			printer.clear();
-		}
-		for (AbbreviationNode abbrNode : node.getAbbreviations()) {
-			visitChildren(abbrNode);
-			String abbr = printer.getString();
-			printer.clear();
-			abbrNode.getExpansion().accept(this);
-			String exp = printer.getString();
-			abbreviations.put(abbr,ext);
+			refs.put(normalize(printer.getString()),refNode);
 			printer.clear();
 		}
 		visitChildren(node);
-	}
-
-	public void visit(AbbreviationNode node) {
-		// TODO Look up AbbreviationNode.
 	}
 
 	public void visit(AnchorLinkNode node) {
@@ -111,11 +96,7 @@ public class ToLatexSerializer implements Visitor {
 	}
 
 	public void visit(HeaderNode node) {
-		String sub = "";
-		for (int i = node.getLevel(); i > 0; --i) {
-			sub += "sub";
-		}
-		printSection(node,sub + "section");
+		printSection(node,node.getLevel());
 	}
 
 	public void visit(HtmlBlockNode node) { // Ignore.
@@ -252,11 +233,7 @@ public class ToLatexSerializer implements Visitor {
     }
 
     public void visit(TextNode node) {
-        if (abbreviations.isEmpty()) {
-            printer.print(node.getText());
-        } else {
-            printWithAbbreviations(node.getText());
-        }
+        printer.print(node.getText());
     }
 
     public void visit(SpecialTextNode node) {
@@ -273,7 +250,54 @@ public class ToLatexSerializer implements Visitor {
         }
     }
 
-    
+    protected void printTag(SuperNode node, String name) {
+        printer.print("\\" + name).print("{");
+        visitChildren(node);
+        printer.print("}");
+    }
 
+    protected void printTag(TextNode node, String name) {
+        printer.print("\\" + name).print("{");
+        printer.print(node.getText()).print("}");
+    }
+
+    protected void printLink(LinkRenderer.Rendering rendering) {
+        printer.print("\\href{" + rendering.href + "}{" + rendering.text + "}");
+    }
+
+    protected void printBlock(SuperNode node, String name) {
+        printer.println().println("\\begin{" + name + "}").indent(+2);
+        visitChildren(node);
+        printer.indent(-2).println("\\end{" + name + "}");
+    }
+
+    protected void printBlock(TextNode node, String name) {
+        printer.println().println("\\begin{" + name + "}").indent(+2);
+        printer.printEncoded(node.getText());
+        printer.indent(-2).println("\\end{" + name + "}");
+    }
+
+    protected void printSection(SuperNode node, int level) {
+        throw new IllegalStateException();
+    }
+
+    protected void printSection(TextNode node, int level) {
+        String sub = "";
+        for (int i = 0; i < 3 && i < level; i++) sub += "sub";
+        printer.println().print("\\" + sub + "section{").print(node.getText()).println("}");
+    }
+
+    protected void printListItem(Node node) {
+        printTag(node,"item");
+    }
+
+    protected String printChildrenToString(SuperNode node) {
+        Printer priorPrinter = printer;
+        printer = new Printer();
+        visitChildren(node);
+        String result = printer.getString();
+        printer = priorPrinter;
+        return result;
+    }
 
 }
