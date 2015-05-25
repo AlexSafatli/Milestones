@@ -283,7 +283,10 @@ public class ToLatexSerializer implements Visitor {
 
     protected void printSection(TextNode node, int level) {
         String sub = "";
-        for (int i = 0; i < 3 && i < level; i++) sub += "sub";
+        if (level > 1) {
+            // Default "report" only allows three levels deep subsections.
+            for (int i = 1; i <= 3 && i <= level; i++) sub += "sub";
+        }
         printer.println().print("\\" + sub + "section{").print(node.getText()).println("}");
     }
 
