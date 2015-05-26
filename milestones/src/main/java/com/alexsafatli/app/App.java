@@ -18,7 +18,7 @@ public class App {
 		if (currExt.equals("")) {
 			target = path + "." + toExt;
 		} else {
-			target = path.replaceAll("." + currExt,toExt);
+			target = path.replaceAll(currExt,toExt);
 		}
 		return target;
 	}

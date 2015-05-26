@@ -34,13 +34,15 @@ public class ToLatexSerializer implements Visitor {
 	}
 
 	public String toLatex(RootNode astRoot) {
+        printPreamble();
+        printer.println().print("\\begin{document}").println();
 		astRoot.accept(this);
+        printer.println().print("\\end{document}").println();
 		return printer.getString();
 	}
 
 	public void visit(RootNode node) {
-        printPreamble();
-        printBlock(node,"document"); // Wrap into a single document.
+        visitChildren(node);
 	}
 
 	public void visit(AnchorLinkNode node) {
@@ -56,7 +58,7 @@ public class ToLatexSerializer implements Visitor {
 	}
 
 	public void visit(BulletListNode node) {
-		printListItem(node);
+		printBlock(node,"itemize");
 	}
 
 	public void visit(CodeNode node) {
@@ -82,9 +84,8 @@ public class ToLatexSerializer implements Visitor {
 	}
 
 	public void visit(ExpLinkNode node) {
-        // TODO
-		/*String text = printChildrenToString(node);
-		printLink(linkRenderer.render(node,text));*/
+		String text = printChildrenToString(node);
+		printLink(linkRenderer.render(node,text));
 	}
 
 	public void visit(HeaderNode node) {
@@ -106,11 +107,11 @@ public class ToLatexSerializer implements Visitor {
 	}
 
 	public void visit(OrderedListNode node) {
-		printBlock(node,"itemize");
+		printBlock(node,"enumerate");
 	}
 
 	public void visit(ParaNode node) {
-		printer.println();
+		printer.println().println();
         visitChildren(node);
 	}
 
@@ -230,7 +231,7 @@ public class ToLatexSerializer implements Visitor {
     }
 
     public void visit(SpecialTextNode node) {
-        printer.printEncoded(node.getText());
+        printer.print(node.getText());
     }
 
     public void visit(SuperNode node) {
@@ -253,6 +254,7 @@ public class ToLatexSerializer implements Visitor {
 
     protected void printPreamble() {
         printer.print("\\documentclass[12pt]{article}").println();
+        printer.print("\\usepackage{hyperref}").println();
     }
 
     protected void printTag(SuperNode node, String name) {
@@ -282,15 +284,17 @@ public class ToLatexSerializer implements Visitor {
     }
 
     protected void printBlock(SuperNode node, String name) {
-        printer.println().print("\\begin{" + name + "}").println().indent(+2);
+        printer.println().println().print("\\begin{" + name + "}").
+            println().indent(+2);
         visitChildren(node);
-        printer.indent(-2).println().print("\\end{" + name + "}").println();
+        printer.indent(-2).print("\\end{" + name + "}").println();
     }
 
     protected void printBlock(TextNode node, String name) {
-        printer.println().print("\\begin{" + name + "}").println().indent(+2);
-        printer.printEncoded(node.getText());
-        printer.indent(-2).println().print("\\end{" + name + "}").println();
+        printer.println().println().print("\\begin{" + name + "}").
+            println().indent(+2);
+        printer.print(node.getText());
+        printer.indent(-2).print("\\end{" + name + "}").println();
     }
 
     protected void printSection(SuperNode node, int level) {
@@ -299,8 +303,8 @@ public class ToLatexSerializer implements Visitor {
             // Default "report" only allows three levels deep subsections.
             for (int i = 1; i <= 3 && i <= level; i++) sub += "sub";
         }
-        printer.println().print("\\" + sub + "section{}").println();
-        visitChildren(node);
+        printer.println().println();
+        printTag(node,sub + "section");
     }
 
     protected void printSection(TextNode node, int level) {
@@ -309,8 +313,9 @@ public class ToLatexSerializer implements Visitor {
             // Default "report" only allows three levels deep subsections.
             for (int i = 1; i <= 3 && i <= level; i++) sub += "sub";
         }
-        printer.println().print("\\" + sub + "section{").print(node.getText()).
-            print("}").println();
+        printer.println();
+        printTag(node,sub + "section");
+        printer.println();
     }
 
     protected void printListItem(TextNode node) {
