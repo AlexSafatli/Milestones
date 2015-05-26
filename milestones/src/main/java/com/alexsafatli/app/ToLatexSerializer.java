@@ -20,13 +20,7 @@ public class ToLatexSerializer implements Visitor {
 
 	// TODO Documentation (renderers, etc.)
 	protected Printer printer = new Printer();
-	protected final Map<String,ReferenceNode> refs = 
-		new HashMap<String,ReferenceNode>();
 	protected final LinkRenderer linkRenderer;
-
-	// TODO Documentation (Verbatim?)
-	protected LatexVerbatimSerializer verbSerializer =
-		new LatexVerbatimSerializer();
 
 	// TODO Documentation (cursors)
 	protected TableNode currTableNode;
@@ -45,11 +39,6 @@ public class ToLatexSerializer implements Visitor {
 	}
 
 	public void visit(RootNode node) {
-		for (ReferenceNode refNode : node.getReferences()) {
-			visitChildren(refNode);
-			refs.put(normalize(printer.getString()),refNode);
-			printer.clear();
-		}
 		visitChildren(node);
 	}
 
@@ -62,7 +51,7 @@ public class ToLatexSerializer implements Visitor {
 	}
 
 	public void visit(BlockQuoteNode node) {
-		printBlock(node,"quote"); // This is correct?
+		printBlock(node,"quote");
 	}
 
 	public void visit(BulletListNode node) {
@@ -70,29 +59,31 @@ public class ToLatexSerializer implements Visitor {
 	}
 
 	public void visit(CodeNode node) {
-		printBlock(node,"code"); // This is correct?
+		printBlock(node,"verbatim");
 	}
 
 	public void visit(DefinitionListNode node) {
-		printBlock(node,""); // TODO Figure out what analogue for this.
+		printBlock(node,"description");
 	}
 
 	public void visit(DefinitionNode node) {
-		printBlock(node,""); // TODO Figure out what analogue for this.
+		// TODO
 	}
 
 	public void visit(DefinitionTermNode node) {
-		printBlock(node,""); // TODO Figure out what analogue for this.
+		// TODO
 	}
 
 	public void visit(ExpImageNode node) {
-		String text = printChildrenToString(node);
-		// TODO What is this?
+        // TODO
+		/*String text = printChildrenToString(node);
+		printImageTag(linkRenderer.render(node,text));*/
 	}
 
 	public void visit(ExpLinkNode node) {
-		String text = printChildrenToString(node);
-		// TODO What is this?		
+        // TODO
+		/*String text = printChildrenToString(node);
+		printLink(linkRenderer.render(node,text));*/
 	}
 
 	public void visit(HeaderNode node) {
@@ -118,7 +109,8 @@ public class ToLatexSerializer implements Visitor {
 	}
 
 	public void visit(ParaNode node) {
-		printer.println().print(node.getText());
+		printer.println();
+        visitChildren(node);
 	}
 
     public void visit(QuotedNode node) {
@@ -197,15 +189,15 @@ public class ToLatexSerializer implements Visitor {
     }
 
     public void visit(TableBodyNode node) {
-    	// TODO Table body
+    	printBlock(node,"table");
     }
 
     public void visit(TableCaptionNode node) {
-
+        printTag(node,"caption");
     }
 
     public void visit(TableCellNode node) {
-
+        // TODO
     }
 
     public void visit(TableColumnNode node) {
@@ -225,7 +217,7 @@ public class ToLatexSerializer implements Visitor {
     }
 
     public void visit(VerbatimNode node) {
-    	// TODO Verbatim
+    	printBlock(node,"verbatim");
     }
 
     public void visit(WikiLinkNode node) {
@@ -244,6 +236,14 @@ public class ToLatexSerializer implements Visitor {
         visitChildren(node);
     }
 
+    @Override
+    public void visit(Node node) {
+    }
+
+    @Override
+    public void visit(AbbreviationNode node) {
+    }
+
     protected void visitChildren(SuperNode node) {
         for (Node child : node.getChildren()) {
             child.accept(this);
@@ -258,6 +258,11 @@ public class ToLatexSerializer implements Visitor {
 
     protected void printTag(TextNode node, String name) {
         printer.print("\\" + name).print("{");
+        printer.print(node.getText()).print("}");
+    }
+
+    protected void printTag(TextNode node, String name, String arg) {
+        printer.print("\\" + name).print("[").print(arg).print("]").print("{");
         printer.print(node.getText()).print("}");
     }
 
@@ -292,6 +297,10 @@ public class ToLatexSerializer implements Visitor {
 
     protected void printListItem(Node node) {
         printTag(node,"item");
+    }
+
+    protected void printListItem(Node node, String arg) {
+        printTag(node,"item",arg);
     }
 
     protected String printChildrenToString(SuperNode node) {
