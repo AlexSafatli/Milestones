@@ -3,15 +3,17 @@
 package com.alexsafatli.app;
 import java.io.*;
 import java.lang.StringBuilder;
+import java.util.ArrayList;
 import org.pegdown.PegDownProcessor;
 import org.pegdown.LinkRenderer;
 import org.pegdown.ast.RootNode;
+import org.apache.commons.cli.*;
 
 public class App {
 
 	private static PegDownProcessor processor = new PegDownProcessor();
 	private static LinkRenderer linkRenderer = new LinkRenderer();
-	private static ToLatexSerializer serializer = new ToLatexSerializer(linkRenderer);
+	private static ToLatexSerializer serializer;
 
 	private static String renameExtension(String path, String toExt) {
 		String target, currExt = getExtension(path);
@@ -73,7 +75,22 @@ public class App {
 	}
 
     public static void main(String[] args) {
-        for (String path : args) {
+    	CommandLineParser parser = new DefaultParser();
+    	Options opts = new Options();
+    	opts.addOption("i",true,"specifies an include TeX file");
+    	try {
+    		CommandLine line = parser.parse(opts,args);
+    	}
+    	catch (ParseException exp) {
+    		System.err.println("Parsing failed. Reason: " + exp.getMessage());
+    		exit(1);
+    	}
+    	String include = "";
+    	if (line.hasOption("i")) {
+    		include = line.getParsedOptionValue("i");
+    	}
+    	serializer = new ToLatexSerializer(linkRenderer,include);
+        for (String path : line.getArgs()) {
         	markdownToLatex(path,renameExtension(path,"tex"));
         }
     }

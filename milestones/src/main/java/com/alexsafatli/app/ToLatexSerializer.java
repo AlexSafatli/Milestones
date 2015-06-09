@@ -11,16 +11,18 @@ import org.pegdown.LinkRenderer;
 import org.pegdown.VerbatimSerializer;
 import org.pegdown.ast.*;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
 
 public class ToLatexSerializer implements Visitor {
 
 	/* Attributes */
 
-	// TODO Documentation (renderers, etc.)
+	// Renderers for constructing string and URL outputs.
 	protected Printer printer = new Printer();
 	protected final LinkRenderer linkRenderer;
+
+    // Specify an include file.
+    protected String include;
 
 	// TODO Documentation (cursors)
 	protected TableNode currTableNode;
@@ -31,7 +33,13 @@ public class ToLatexSerializer implements Visitor {
 
 	public ToLatexSerializer(LinkRenderer linkRenderer) {
 		this.linkRenderer = linkRenderer;
+        include = "";
 	}
+
+    public ToLatexSerializer(LinkRenderer linkRenderer, String include) {
+        this.linkRenderer = linkRenderer;
+        this.include = include;
+    }
 
 	public String toLatex(RootNode astRoot) {
         printPreamble();
@@ -255,6 +263,9 @@ public class ToLatexSerializer implements Visitor {
     protected void printPreamble() {
         printer.print("\\documentclass[12pt]{article}").println();
         printer.print("\\usepackage{hyperref}").println();
+        if (!include.equals("")) {
+            printer.print("\\include{").print(include).print("}").println();
+        }
     }
 
     protected void printTag(SuperNode node, String name) {
